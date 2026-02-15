@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-// Schema Validation For Register
+// Schema validation for register
 export const registerSchema = Joi.object({
   name: Joi.string().trim().min(3).max(25).required().messages({
     "string.empty": "Name is required",
@@ -22,7 +22,7 @@ export const registerSchema = Joi.object({
   allowUnknown: false,
 });
 
-// Schema Validation For Login
+// Schema validation for login
 export const loginSchema = Joi.object({
   email: Joi.string().trim().email().required().messages({
     "string.email": "Invalid email format",
