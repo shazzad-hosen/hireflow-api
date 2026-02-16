@@ -9,6 +9,9 @@ import {
 export const registerUser = async (data) => {
   const { name, email, password } = data;
 
+  console.log(`email is: ${email}`);
+  console.log("data", data);
+
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {

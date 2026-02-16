@@ -1,7 +1,7 @@
 import express from "express";
+import authRoutes from "./routes/auth.routes.js";
 import ApiError from "./utils/ApiError.js";
 import errorHandler from "./middlewares/error.middleware.js";
-import authRoutes from "./routes/auth.routes.js";
 
 const app = express();
 
