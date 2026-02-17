@@ -9,9 +9,6 @@ import {
 export const registerUser = async (data) => {
   const { name, email, password } = data;
 
-  console.log(`email is: ${email}`);
-  console.log("data", data);
-
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
@@ -47,7 +44,7 @@ export const loginUser = async (data) => {
     throw new ApiError(401, "Invalid credentials");
   }
 
-  const isMatch = await user.comparePassword(password);
+  const isMatch = await user.isPasswordCorrect(password);
 
   if (!isMatch) {
     throw new ApiError(401, "Invalid credentials");

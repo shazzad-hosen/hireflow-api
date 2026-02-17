@@ -2,11 +2,7 @@ import { registerUser, loginUser } from "../services/auth.service.js";
 
 // Register controller
 export const register = async (req, res) => {
-  console.log("BODY from controller:", req.body);
   const result = await registerUser(req.body);
-  console.log(result);
-
-  console.log(`registerUser test: ${registerUser}`);
 
   res.status(201).json({
     success: true,
