@@ -8,6 +8,7 @@ import { RefreshToken } from "../models/refreshToken.model.js";
 import crypto from "crypto";
 import parseExpiryToMs from "../utils/parseExpiry.js";
 import { ENV } from "../config/env.js";
+import jwt from "jsonwebtoken";
 
 // User register services
 export const registerUser = async (data) => {
@@ -96,5 +97,59 @@ export const loginUser = async (data) => {
     user: userObject,
     accessToken,
     refreshToken,
+  };
+};
+
+// Refresh token rotation services
+export const refreshUserToken = async (incomingRefreshToken) => {
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Refresh token required");
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(incomingRefreshToken, ENV.REFRESH_TOKEN_SECRET);
+  } catch (error) {
+    throw new ApiError(401, "Invalid refresh token");
+  }
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(incomingRefreshToken)
+    .digest("hex");
+
+  const existingToken = await RefreshToken.findOne({
+    token: hashedToken,
+    user: decoded.id,
+  });
+
+  if (!existingToken) {
+    await RefreshToken.deleteMany({ user: decoded.id });
+    throw new ApiError(403, "Refresh token reuse detected");
+  }
+
+  await RefreshToken.deleteOne({ _id: existingToken._id });
+
+  const newAccessToken = generateAccessToken(decoded.id);
+  const newRefreshToken = generateRefreshToken(decoded.id);
+
+  const newHashedToken = crypto
+    .createHash("sha256")
+    .update(newRefreshToken)
+    .digest("hex");
+
+  const refreshExpiry = new Date(
+    Date.now() + parseExpiryToMs(ENV.REFRESH_TOKEN_EXPIRY),
+  );
+
+  await RefreshToken.create({
+    user: decoded.id,
+    token: newHashedToken,
+    expiresAt: refreshExpiry,
+  });
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
   };
 };
