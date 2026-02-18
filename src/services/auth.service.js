@@ -4,6 +4,10 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/generateTokens.js";
+import { RefreshToken } from "../models/refreshToken.model.js";
+import crypto from "crypto";
+import parseExpiryToMs from "../utils/parseExpiry.js";
+import { ENV } from "../config/env.js";
 
 // User register services
 export const registerUser = async (data) => {
@@ -23,6 +27,21 @@ export const registerUser = async (data) => {
 
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(refreshToken)
+    .digest("hex");
+
+  const refreshExpiry = new Date(
+    Date.now() + parseExpiryToMs(ENV.REFRESH_TOKEN_EXPIRY),
+  );
+
+  await RefreshToken.create({
+    user: user._id,
+    token: hashedToken,
+    expiresAt: refreshExpiry,
+  });
 
   const userObject = user.toObject();
   delete userObject.password;
@@ -50,8 +69,25 @@ export const loginUser = async (data) => {
     throw new ApiError(401, "Invalid credentials");
   }
 
+  await RefreshToken.deleteMany({ user: user._id });
+
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(refreshToken)
+    .digest("hex");
+
+  const refreshExpiry = new Date(
+    Date.now() + parseExpiryToMs(ENV.REFRESH_TOKEN_EXPIRY),
+  );
+
+  await RefreshToken.create({
+    user: user._id,
+    token: hashedToken,
+    expiresAt: refreshExpiry,
+  });
 
   const userObject = user.toObject();
   delete userObject.password;
