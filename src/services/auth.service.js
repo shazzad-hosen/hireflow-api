@@ -153,3 +153,19 @@ export const refreshUserToken = async (incomingRefreshToken) => {
     refreshToken: newRefreshToken,
   };
 };
+
+// User log out services
+export const logoutUser = async (incomingRefreshToken) => {
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Refresh token required");
+  }
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(incomingRefreshToken)
+    .digest("hex");
+
+  await RefreshToken.deleteOne({ token: hashedToken });
+
+  return { message: "Logged out successfully" };
+};

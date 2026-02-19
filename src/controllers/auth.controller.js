@@ -2,6 +2,7 @@ import {
   registerUser,
   loginUser,
   refreshUserToken,
+  logoutUser,
 } from "../services/auth.service.js";
 
 // Register controller
@@ -35,5 +36,17 @@ export const refreshToken = async (req, res) => {
   res.status(200).json({
     success: true,
     ...tokens,
+  });
+};
+
+// Log out controller
+export const logout = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  const result = await logoutUser(refreshToken);
+
+  res.status(200).json({
+    success: true,
+    message: result.message,
   });
 };
