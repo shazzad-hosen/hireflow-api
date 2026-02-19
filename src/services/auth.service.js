@@ -8,7 +8,6 @@ import { RefreshToken } from "../models/refreshToken.model.js";
 import crypto from "crypto";
 import parseExpiryToMs from "../utils/parseExpiry.js";
 import { ENV } from "../config/env.js";
-import jwt from "jsonwebtoken";
 
 // User register services
 export const registerUser = async (data) => {
@@ -101,39 +100,13 @@ export const loginUser = async (data) => {
 };
 
 // Refresh token rotation services
-export const refreshUserToken = async (incomingRefreshToken) => {
-  if (!incomingRefreshToken) {
-    throw new ApiError(401, "Refresh token required");
-  }
+export const refreshUserToken = async (userId, existingRefreshToken) => {
+  await RefreshToken.deleteOne({ _id: existingRefreshToken._id });
 
-  let decoded;
-  try {
-    decoded = jwt.verify(incomingRefreshToken, ENV.REFRESH_TOKEN_SECRET);
-  } catch (error) {
-    throw new ApiError(401, "Invalid refresh token");
-  }
+  const newAccessToken = generateAccessToken(userId);
+  const newRefreshToken = generateRefreshToken(userId);
 
   const hashedToken = crypto
-    .createHash("sha256")
-    .update(incomingRefreshToken)
-    .digest("hex");
-
-  const existingToken = await RefreshToken.findOne({
-    token: hashedToken,
-    user: decoded.id,
-  });
-
-  if (!existingToken) {
-    await RefreshToken.deleteMany({ user: decoded.id });
-    throw new ApiError(403, "Refresh token reuse detected");
-  }
-
-  await RefreshToken.deleteOne({ _id: existingToken._id });
-
-  const newAccessToken = generateAccessToken(decoded.id);
-  const newRefreshToken = generateRefreshToken(decoded.id);
-
-  const newHashedToken = crypto
     .createHash("sha256")
     .update(newRefreshToken)
     .digest("hex");
@@ -143,8 +116,8 @@ export const refreshUserToken = async (incomingRefreshToken) => {
   );
 
   await RefreshToken.create({
-    user: decoded.id,
-    token: newHashedToken,
+    user: userId,
+    token: hashedToken,
     expiresAt: refreshExpiry,
   });
 
@@ -156,16 +129,5 @@ export const refreshUserToken = async (incomingRefreshToken) => {
 
 // User log out services
 export const logoutUser = async (incomingRefreshToken) => {
-  if (!incomingRefreshToken) {
-    throw new ApiError(401, "Refresh token required");
-  }
-
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(incomingRefreshToken)
-    .digest("hex");
-
-  await RefreshToken.deleteOne({ token: hashedToken });
-
-  return { message: "Logged out successfully" };
+  await RefreshToken.deleteOne({ _id: incomingRefreshToken._id });
 };
