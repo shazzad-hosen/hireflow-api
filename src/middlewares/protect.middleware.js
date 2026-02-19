@@ -12,7 +12,7 @@ const protect = async (req, res, next) => {
   }
 
   if (!token) {
-    return next(new ApiError(400, "Not authorized, token missing"));
+    return next(new ApiError(401, "Not authorized, token missing"));
   }
 
   try {
