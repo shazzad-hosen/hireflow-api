@@ -16,25 +16,22 @@ const verifyRefreshToken = async (req, res, next) => {
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-    const existingToken = RefreshToken.findOne({
+    const existingToken = await RefreshToken.findOne({
       token: hashedToken,
+      revoked: false,
+      expiresAt: { $gt: new Date() },
     });
 
-    if (!existingToken || existingToken.revoked) {
+    if (!existingToken) {
       await RefreshToken.deleteMany({ user: decoded.id });
       return next(new ApiError(403, "Token compromised. Please login again."));
     }
 
-    if (existingToken.expiresAt < Date.now()) {
-      await tokenDoc.deleteOne();
-      return next(new ApiError(401, "Refresh token expired"));
-    }
-
-    req.user = { id: decoded.id };
+    req.userId = decoded.id;
     req.refreshToken = existingToken;
     next();
   } catch (error) {
-    return next(new ApiError(401, 401, "Invalid or expired session"));
+    return next(new ApiError(401, "Invalid or expired session"));
   }
 };
 
