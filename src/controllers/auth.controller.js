@@ -7,13 +7,12 @@ import {
 import { ENV } from "../config/env.js";
 import parseExpiryToMs from "../utils/parseExpiry.js";
 
-// Register controller
 export const register = async (req, res) => {
   const result = await registerUser(req.body);
 
   res.cookie("refreshToken", result.refreshToken, {
     httpOnly: true,
-    secure: ENV.NODE_ENV == "production",
+    secure: ENV.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: parseExpiryToMs(ENV.REFRESH_TOKEN_EXPIRY),
   });
@@ -28,13 +27,12 @@ export const register = async (req, res) => {
   });
 };
 
-// Log in controller
 export const login = async (req, res) => {
   const result = await loginUser(req.body);
 
   res.cookie("refreshToken", result.refreshToken, {
     httpOnly: true,
-    secure: ENV.NODE_ENV == "production",
+    secure: ENV.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: parseExpiryToMs(ENV.REFRESH_TOKEN_EXPIRY),
   });
@@ -49,13 +47,12 @@ export const login = async (req, res) => {
   });
 };
 
-// Refresh token controller
 export const refreshToken = async (req, res) => {
   const tokens = await refreshUserToken(req.userId, req.refreshToken);
 
   res.cookie("refreshToken", tokens.refreshToken, {
     httpOnly: true,
-    secure: ENV.NODE_ENV == "production",
+    secure: ENV.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: parseExpiryToMs(ENV.REFRESH_TOKEN_EXPIRY),
   });
@@ -66,7 +63,6 @@ export const refreshToken = async (req, res) => {
   });
 };
 
-// Log out controller
 export const logout = async (req, res) => {
   await logoutUser(req.refreshToken);
 
