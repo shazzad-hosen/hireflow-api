@@ -43,7 +43,8 @@ const applicationSchema = new mongoose.Schema(
         min: 0,
         validate: {
           validator: function (value) {
-            return !this.salaryRange.min || value >= this.salaryRange.min;
+            if (this.salaryRange?.min == null) return true;
+            return value >= this.salaryRange.min;
           },
           message: "Max salary must be greater than or equal to min salary",
         },
@@ -92,16 +93,27 @@ const applicationSchema = new mongoose.Schema(
     },
 
     offerDetails: {
-      salary: Number,
+      salary: {
+        type: Number,
+        min: 0,
+      },
+      currency: {
+        type: String,
+        uppercase: true,
+        default: "USD",
+      },
       joiningDate: Date,
-      notes: String,
+      notes: {
+        type: String,
+        trim: true,
+      },
     },
 
     notes: {
       type: String,
       trim: true,
     },
-    
+
     isDeleted: {
       type: Boolean,
       default: false,
@@ -111,7 +123,6 @@ const applicationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Prevent impossible data combinations
 applicationSchema.pre("save", function (next) {
   if (this.status === "REJECTED" && this.offerDetails) {
     return next(new Error("Rejected application cannot contain offer details"));
@@ -119,17 +130,32 @@ applicationSchema.pre("save", function (next) {
 
   if (
     this.status === "OFFER" &&
-    (!this.offerDetails || this.offerDetails.salary)
+    (!this.offerDetails || !this.offerDetails.salary)
   ) {
     return next(new Error("Offer details required when status is OFFER"));
+  }
+
+  if (this.salaryRange?.max < this.salaryRange?.min) {
+    return next(
+      new Error("Max salary must be greater than or equal to min salary"),
+    );
   }
 
   next();
 });
 
-// Filter deleted applications in every find
 applicationSchema.pre(/^find/, function (next) {
-  this.find({ isDeleted: { $ne: true } });
+  this.where({ isDeleted: { $ne: true } });
+  next();
+});
+
+applicationSchema.pre(/^findOneAndUpdate/, function (next) {
+  this.where({ isDeleted: { $ne: true } });
+  next();
+});
+
+applicationSchema.pre("aggregate", function (next) {
+  this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } });
   next();
 });
 
