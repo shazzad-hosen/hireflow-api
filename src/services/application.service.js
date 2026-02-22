@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { Application } from "../models/application.model";
-import ApiError from "../utils/ApiError";
+import { Application } from "../models/application.model.js";
+import ApiError from "../utils/ApiError.js";
 
 // Status transition rules
 const allowedTransitions = {
