@@ -21,6 +21,7 @@
   "homepage": "https://github.com/shazzad-hosen/hireflow-api#readme",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "joi": "^18.0.2",
@@ -28,6 +29,6 @@
     "mongoose": "^9.2.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^1.0.2"
   }
 }

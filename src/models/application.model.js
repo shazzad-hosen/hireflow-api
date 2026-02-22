@@ -123,45 +123,51 @@ const applicationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-applicationSchema.pre("save", function (next) {
+applicationSchema.pre("save", function () {
+  if (this.status !== "OFFER") {
+    this.offerDetails = undefined;
+  }
+
   if (this.status === "REJECTED" && this.offerDetails) {
-    return next(new Error("Rejected application cannot contain offer details"));
+    throw new Error("Rejected application cannot contain offer details");
   }
 
   if (
     this.status === "OFFER" &&
     (!this.offerDetails || !this.offerDetails.salary)
   ) {
-    return next(new Error("Offer details required when status is OFFER"));
+    throw new Error("Offer details required when status is OFFER");
   }
 
   if (this.salaryRange?.max < this.salaryRange?.min) {
-    return next(
-      new Error("Max salary must be greater than or equal to min salary"),
-    );
+    throw new Error("Max salary must be greater than or equal to min salary");
   }
-
-  next();
 });
 
-applicationSchema.pre(/^find/, function (next) {
+applicationSchema.pre(/^find/, function () {
   this.where({ isDeleted: { $ne: true } });
-  next();
 });
 
-applicationSchema.pre(/^findOneAndUpdate/, function (next) {
+applicationSchema.pre(/^findOneAndUpdate/, function () {
   this.where({ isDeleted: { $ne: true } });
-  next();
 });
 
-applicationSchema.pre("aggregate", function (next) {
+applicationSchema.pre("aggregate", function () {
   this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } });
-  next();
 });
 
 applicationSchema.index({ user: 1, status: 1 });
 applicationSchema.index({ user: 1, createdAt: -1 });
-applicationSchema.index({ user: 1, companyName: 1 });
 applicationSchema.index({ user: 1, appliedAt: -1 });
+
+applicationSchema.index(
+  { user: 1, companyName: 1, jobTitle: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      status: { $ne: "REJECTED" },
+    },
+  },
+);
 
 export const Application = mongoose.model("Application", applicationSchema);

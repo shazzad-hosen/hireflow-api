@@ -3,6 +3,7 @@ import authRoutes from "./routes/auth.routes.js";
 import ApiError from "./utils/ApiError.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import cookieParser from "cookie-parser";
+import applicationRoutes from "./routes/application.routes.js";
 
 const app = express();
 app.use(cookieParser());
@@ -15,6 +16,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/applications", applicationRoutes);
 
 // Request handler for invalid(404) routes
 app.use((req, res, next) => {
