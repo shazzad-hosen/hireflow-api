@@ -119,11 +119,25 @@ const applicationSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
   },
   { timestamps: true },
 );
 
 applicationSchema.pre("save", function () {
+  if (this.status === "REJECTED") {
+    this.isActive = false;
+  }
+
+  if (this.status !== "REJECTED") {
+    this.isActive = true;
+  }
+
   if (this.status !== "OFFER") {
     this.offerDetails = undefined;
   }
@@ -164,9 +178,7 @@ applicationSchema.index(
   { user: 1, companyName: 1, jobTitle: 1 },
   {
     unique: true,
-    partialFilterExpression: {
-      status: { $ne: "REJECTED" },
-    },
+    partialFilterExpression: { isActive: true },
   },
 );
 
