@@ -4,8 +4,8 @@ import ApiError from "../utils/ApiError.js";
 
 // Status transition rules
 const allowedTransitions = {
-  APPLIED: ["INTERVIEW", "REJECTED", "WITHDRAWN"],
-  INTERVIEW: ["OFFER", "REJECTED", "WITHDRAWN"],
+  APPLIED: ["INTERVIEW", "REJECTED"],
+  INTERVIEW: ["OFFER", "REJECTED"],
   OFFER: ["WITHDRAWN"],
   REJECTED: [],
   WITHDRAWN: [],
@@ -35,10 +35,15 @@ export const getApplications = async (userId, query) => {
   const limitNumber = Math.min(Math.max(Number(limit), 1), 100);
   const skip = (pageNumber - 1) * limitNumber;
 
-  const filter = { user: userId };
+  const filter = { user: userId, isDeleted: false };
 
-  if (status) filter.status = status;
-  if (company) filter.companyName = { $regex: company, $options: "i" };
+  if (status) {
+    filter.status = status;
+  }
+
+  if (company) {
+    filter.companyName = { $regex: company, $options: "i" };
+  }
 
   if (search) {
     filter.$or = [
@@ -90,6 +95,7 @@ export const updateApplication = async (userId, id, data) => {
   const existing = await Application.findOne({
     _id: id,
     user: userId,
+    isDeleted: false,
   });
 
   if (!existing) {
@@ -101,7 +107,7 @@ export const updateApplication = async (userId, id, data) => {
     if (!allowed.includes(data.status)) {
       throw new ApiError(
         400,
-        `Invalid transition: ${existing.status} -> ${data.status}`,
+        `Invalid transition: ${existing.status} to ${data.status}`,
       );
     }
   }
@@ -164,5 +170,53 @@ export const getAnalytics = async (userId) => {
     total,
     statusBreakdown: statusCounts,
     monthlyApplications,
+  };
+};
+
+export const getApplicationStats = async (userId) => {
+  const stats = await Application.aggregate([
+    {
+      $match: {
+        user: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+      },
+    },
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const byStatus = {};
+  let total = 0;
+
+  stats.forEach((item) => {
+    byStatus[item._id] = item.count;
+    total += item.count;
+  });
+
+  const interviews = byStatus.INTERVIEW || 0;
+  const offers = byStatus.OFFER || 0;
+  const accepted = byStatus.ACCEPTED || 0;
+  const rejected = byStatus.REJECTED || 0;
+
+  const interviewRate = total ? ((interviews / total) * 100).toFixed(2) : 0;
+
+  const offerRate = total ? ((offers / total) * 100).toFixed(2) : 0;
+
+  const acceptanceRate = offers ? ((accepted / offers) * 100).toFixed(2) : 0;
+
+  return {
+    total,
+    active: total - rejected,
+    rejected,
+    byStatus,
+    metrics: {
+      interviewRate: Number(interviewRate),
+      offerRate: Number(offerRate),
+      acceptanceRate: Number(acceptanceRate),
+    },
   };
 };

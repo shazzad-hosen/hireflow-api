@@ -5,6 +5,7 @@ import {
   updateApplication,
   deleteApplication,
   getAnalytics,
+  getApplicationStats,
 } from "../services/application.service.js";
 
 export const createApplicationController = async (req, res) => {
@@ -64,5 +65,14 @@ export const getAnalyticsController = async (req, res) => {
   res.status(200).json({
     success: true,
     data: analytics,
+  });
+};
+
+export const getApplicationStatsController = async (req, res) => {
+  const stats = await getApplicationStats(req.user.id);
+
+  res.status(200).json({
+    success: true,
+    ...stats,
   });
 };

@@ -9,6 +9,7 @@ import {
   updateApplicationController,
   deleteApplicationController,
   getAnalyticsController,
+  getApplicationStatsController,
 } from "../controllers/application.controller.js";
 import {
   createApplicationSchema,
@@ -27,6 +28,8 @@ router.post(
 );
 
 router.get("/", protect, asyncHandler(getApplicationsController));
+
+router.get("/stats", protect, asyncHandler(getApplicationStatsController));
 
 router.get("/:id", protect, asyncHandler(getSingleApplicationController));
 
