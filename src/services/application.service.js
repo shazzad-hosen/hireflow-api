@@ -116,7 +116,7 @@ export const updateApplication = async (userId, id, data) => {
     { _id: id, user: userId },
     { $set: data },
     {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     },
   );
