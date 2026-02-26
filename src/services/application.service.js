@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Application } from "../models/application.model.js";
 import ApiError from "../utils/ApiError.js";
 import applicationEmitter from "../events/application.events.js";
-import ApplicationHistory from "../models/applicationHistory.model.js";
+import { ApplicationHistory } from "../models/applicationHistory.model.js";
 
 // Status transition rules
 const allowedTransitions = {
@@ -154,62 +154,49 @@ export const deleteApplication = async (userId, id) => {
   return { message: "Application moved to trash" };
 };
 
-export const getAnalytics = async (userId) => {
+export const getApplicationAnalytics = async (userId) => {
   const objectUserId = new mongoose.Types.ObjectId(userId);
 
-  const total = await Application.countDocuments({ user: objectUserId });
-
-  const statusCounts = await Application.aggregate([
-    { $match: { user: objectUserId } },
-    {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 },
-      },
-    },
-  ]);
-
-  const monthlyApplications = await Application.aggregate([
-    { $match: { user: objectUserId } },
-    {
-      $group: {
-        _id: {
-          year: { $year: "$appliedAt" },
-          month: { $month: "$appliedAt" },
-        },
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { "_id.year": -1, "_id.month": -1 } },
-  ]);
-
-  return {
-    total,
-    statusBreakdown: statusCounts,
-    monthlyApplications,
-  };
-};
-
-export const getApplicationStats = async (userId) => {
-  const stats = await Application.aggregate([
+  const result = await Application.aggregate([
     {
       $match: {
-        user: new mongoose.Types.ObjectId(userId),
+        user: objectUserId,
         isDeleted: false,
       },
     },
     {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 },
+      $facet: {
+        statusStats: [
+          {
+            $group: {
+              _id: "$status",
+              count: { $sum: 1 },
+            },
+          },
+        ],
+        monthlyApplications: [
+          {
+            $group: {
+              _id: {
+                year: { $year: "$appliedAt" },
+                month: { $month: "$appliedAt" },
+              },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { "_id.year": -1, "_id.month": -1 } },
+        ],
       },
     },
   ]);
 
+  const statusStats = result[0].statusStats;
+  const monthlyApplications = result[0].monthlyApplications;
+
   const byStatus = {};
   let total = 0;
 
-  stats.forEach((item) => {
+  statusStats.forEach((item) => {
     byStatus[item._id] = item.count;
     total += item.count;
   });
@@ -220,20 +207,21 @@ export const getApplicationStats = async (userId) => {
   const rejected = byStatus.REJECTED || 0;
 
   const interviewRate = total ? ((interviews / total) * 100).toFixed(2) : 0;
-
   const offerRate = total ? ((offers / total) * 100).toFixed(2) : 0;
-
   const acceptanceRate = offers ? ((accepted / offers) * 100).toFixed(2) : 0;
+  const rejectionRate = total ? ((rejected / total) * 100).toFixed(2) : 0;
 
   return {
     total,
     active: total - rejected,
     rejected,
     byStatus,
+    monthlyApplications,
     metrics: {
       interviewRate: Number(interviewRate),
       offerRate: Number(offerRate),
       acceptanceRate: Number(acceptanceRate),
+      rejectionRate: Number(rejectionRate),
     },
   };
 };
@@ -249,7 +237,7 @@ export const getApplicationHistory = async (userId, applicationId) => {
     throw new ApiError(404, "Application not found");
   }
 
-  const history = await ApplicationHistory.findOne({
+  const history = await ApplicationHistory.find({
     application: applicationId,
     user: userId,
   })

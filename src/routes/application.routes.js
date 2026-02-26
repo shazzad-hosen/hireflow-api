@@ -8,8 +8,8 @@ import {
   getSingleApplicationController,
   updateApplicationController,
   deleteApplicationController,
-  getAnalyticsController,
-  getApplicationStatsController,
+  getApplicationAnalyticsController,
+  getApplicationHistoryController,
 } from "../controllers/application.controller.js";
 import {
   createApplicationSchema,
@@ -18,7 +18,11 @@ import {
 
 const router = express.Router();
 
-router.get("/analytics", protect, asyncHandler(getAnalyticsController));
+router.get(
+  "/analytics",
+  protect,
+  asyncHandler(getApplicationAnalyticsController),
+);
 
 router.post(
   "/",
@@ -28,8 +32,6 @@ router.post(
 );
 
 router.get("/", protect, asyncHandler(getApplicationsController));
-
-router.get("/stats", protect, asyncHandler(getApplicationStatsController));
 
 router.get("/:id", protect, asyncHandler(getSingleApplicationController));
 
@@ -41,5 +43,11 @@ router.patch(
 );
 
 router.delete("/:id", protect, asyncHandler(deleteApplicationController));
+
+router.get(
+  "/:id/history",
+  protect,
+  asyncHandler(getApplicationHistoryController),
+);
 
 export default router;

@@ -4,8 +4,7 @@ import {
   getSingleApplication,
   updateApplication,
   deleteApplication,
-  getAnalytics,
-  getApplicationStats,
+  getApplicationAnalytics,
   getApplicationHistory,
 } from "../services/application.service.js";
 
@@ -60,8 +59,8 @@ export const deleteApplicationController = async (req, res) => {
   });
 };
 
-export const getAnalyticsController = async (req, res) => {
-  const analytics = await getAnalytics(req.user._id);
+export const getApplicationAnalyticsController = async (req, res) => {
+  const analytics = await getApplicationAnalytics(req.user._id);
 
   res.status(200).json({
     success: true,
@@ -69,17 +68,8 @@ export const getAnalyticsController = async (req, res) => {
   });
 };
 
-export const getApplicationStatsController = async (req, res) => {
-  const stats = await getApplicationStats(req.user.id);
-
-  res.status(200).json({
-    success: true,
-    ...stats,
-  });
-};
-
-export const getApplicationHistoryController = async () => {
-  const history = getApplicationHistory(req.user._id, req.params.id);
+export const getApplicationHistoryController = async (req, res) => {
+  const history = await getApplicationHistory(req.user._id, req.params.id);
 
   res.status(200).json({
     success: true,
