@@ -1,5 +1,5 @@
 import applicationEmitter from "../events/application.events.js";
-import ApplicationHistory from "../models/applicationHistory.model.js";
+import { ApplicationHistory } from "../models/applicationHistory.model.js";
 
 applicationEmitter.on("application.statusChanged", async (data) => {
   try {

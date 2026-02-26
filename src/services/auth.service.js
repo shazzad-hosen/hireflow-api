@@ -9,7 +9,6 @@ import crypto from "crypto";
 import parseExpiryToMs from "../utils/parseExpiry.js";
 import { ENV } from "../config/env.js";
 
-// User register services
 export const registerUser = async (data) => {
   const { name, email, password } = data;
 
@@ -53,7 +52,6 @@ export const registerUser = async (data) => {
   };
 };
 
-// User log in services
 export const loginUser = async (data) => {
   const { email, password } = data;
 
@@ -99,7 +97,6 @@ export const loginUser = async (data) => {
   };
 };
 
-// Refresh token rotation services
 export const refreshUserToken = async (userId, existingRefreshToken) => {
   await RefreshToken.deleteOne({ _id: existingRefreshToken._id });
 
@@ -127,7 +124,6 @@ export const refreshUserToken = async (userId, existingRefreshToken) => {
   };
 };
 
-// User log out services
 export const logoutUser = async (incomingRefreshToken) => {
   await RefreshToken.deleteOne({ _id: incomingRefreshToken._id });
 };

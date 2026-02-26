@@ -3,6 +3,11 @@ import { Application } from "../models/application.model.js";
 import ApiError from "../utils/ApiError.js";
 import applicationEmitter from "../events/application.events.js";
 import { ApplicationHistory } from "../models/applicationHistory.model.js";
+import {
+  buildApplicationFilter,
+  buildPagination,
+  buildSort,
+} from "../utils/applicationQueryBuilder.js";
 
 // Status transition rules
 const allowedTransitions = {
@@ -21,61 +26,22 @@ export const createApplication = async (userId, data) => {
 };
 
 export const getApplications = async (userId, query) => {
-  const {
-    page = 1,
-    limit = 10,
-    status,
-    company,
-    search,
-    startDate,
-    endDate,
-    sortBy = "createdAt",
-    order = "desc",
-  } = query;
-
-  const pageNumber = Math.max(Number(page), 1);
-  const limitNumber = Math.min(Math.max(Number(limit), 1), 100);
-  const skip = (pageNumber - 1) * limitNumber;
-
-  const filter = { user: userId, isDeleted: false };
-
-  if (status) {
-    filter.status = status;
-  }
-
-  if (company) {
-    filter.companyName = { $regex: company, $options: "i" };
-  }
-
-  if (search) {
-    filter.$or = [
-      { companyName: { $regex: search, $options: "i" } },
-      { jobTitle: { $regex: search, $options: "i" } },
-    ];
-  }
-
-  if (startDate || endDate) {
-    filter.appliedAt = {};
-    if (startDate) filter.appliedAt.$gte = new Date(startDate);
-    if (endDate) filter.appliedAt.$lte = new Date(endDate);
-  }
-
-  const allowedSortFields = ["createdAt", "appliedAt", "companyName", "status"];
-  const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
-  const sortOrder = order === "asc" ? 1 : -1;
+  const filter = buildApplicationFilter(userId, query);
+  const { page, limit, skip } = buildPagination(query);
+  const sort = buildSort(query);
 
   const applications = await Application.find(filter)
-    .sort({ [sortField]: sortOrder })
+    .sort(sort)
     .skip(skip)
-    .limit(limitNumber)
+    .limit(limit)
     .lean();
 
   const total = await Application.countDocuments(filter);
 
   return {
     total,
-    page: pageNumber,
-    pages: Math.ceil(total / limitNumber),
+    page,
+    pages: Math.ceil(total / limit),
     data: applications,
   };
 };

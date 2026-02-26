@@ -32,4 +32,7 @@ const applicationHistorySchema = new mongoose.Schema(
 
 applicationHistorySchema.index({ application: 1, createdAt: 1 });
 
-export default mongoose.model("ApplicationHistory", applicationHistorySchema);
+export const ApplicationHistory = mongoose.model(
+  "ApplicationHistory",
+  applicationHistorySchema,
+);
