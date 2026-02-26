@@ -1,6 +1,7 @@
 import app from "./src/app.js";
 import { ENV } from "./src/config/env.js";
 import { connectDB } from "./src/config/db.js";
+import "./src/listeners/application.listeners.js";
 
 const PORT = ENV.PORT || 3000;
 

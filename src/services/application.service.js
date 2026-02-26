@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Application } from "../models/application.model.js";
 import ApiError from "../utils/ApiError.js";
+import applicationEmitter from "../events/application.events.js";
 
 // Status transition rules
 const allowedTransitions = {
@@ -102,14 +103,20 @@ export const updateApplication = async (userId, id, data) => {
     throw new ApiError(404, "Application not found");
   }
 
+  let statusChanged = false;
+  let previousStatus = existing.status;
+
   if (data.status && data.status !== existing.status) {
     const allowed = allowedTransitions[existing.status] || [];
+
     if (!allowed.includes(data.status)) {
       throw new ApiError(
         400,
         `Invalid transition: ${existing.status} to ${data.status}`,
       );
     }
+
+    statusChanged = true;
   }
 
   const updated = await Application.findOneAndUpdate(
@@ -120,6 +127,15 @@ export const updateApplication = async (userId, id, data) => {
       runValidators: true,
     },
   );
+
+  if (statusChanged) {
+    applicationEmitter.emit("application.statusChanged", {
+      applicationId: updated._id,
+      userId,
+      previousStatus,
+      newStatus: updated.status,
+    });
+  }
 
   return updated;
 };
