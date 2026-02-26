@@ -30,4 +30,6 @@ const applicationHistorySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+applicationHistorySchema.index({ application: 1, createdAt: 1 });
+
 export default mongoose.model("ApplicationHistory", applicationHistorySchema);

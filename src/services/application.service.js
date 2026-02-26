@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Application } from "../models/application.model.js";
 import ApiError from "../utils/ApiError.js";
 import applicationEmitter from "../events/application.events.js";
+import ApplicationHistory from "../models/applicationHistory.model.js";
 
 // Status transition rules
 const allowedTransitions = {
@@ -235,4 +236,25 @@ export const getApplicationStats = async (userId) => {
       acceptanceRate: Number(acceptanceRate),
     },
   };
+};
+
+export const getApplicationHistory = async (userId, applicationId) => {
+  const application = await Application.findOne({
+    _id: applicationId,
+    user: userId,
+    isDeleted: false,
+  });
+
+  if (!application) {
+    throw new ApiError(404, "Application not found");
+  }
+
+  const history = await ApplicationHistory.findOne({
+    application: applicationId,
+    user: userId,
+  })
+    .sort({ createdAt: 1 })
+    .lean();
+
+  return history;
 };

@@ -6,6 +6,7 @@ import {
   deleteApplication,
   getAnalytics,
   getApplicationStats,
+  getApplicationHistory,
 } from "../services/application.service.js";
 
 export const createApplicationController = async (req, res) => {
@@ -74,5 +75,15 @@ export const getApplicationStatsController = async (req, res) => {
   res.status(200).json({
     success: true,
     ...stats,
+  });
+};
+
+export const getApplicationHistoryController = async () => {
+  const history = getApplicationHistory(req.user._id, req.params.id);
+
+  res.status(200).json({
+    success: true,
+    results: history.length,
+    data: history,
   });
 };

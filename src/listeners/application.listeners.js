@@ -1,9 +1,9 @@
 import applicationEmitter from "../events/application.events.js";
-import applicationHistoryModel from "../models/applicationHistory.model.js";
+import ApplicationHistory from "../models/applicationHistory.model.js";
 
 applicationEmitter.on("application.statusChanged", async (data) => {
   try {
-    await applicationHistoryModel.create({
+    await ApplicationHistory.create({
       application: data.applicationId,
       user: data.userId,
       previousStatus: data.previousStatus,
