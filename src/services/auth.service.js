@@ -148,3 +148,28 @@ export const logoutUser = async (userId, incomingRefreshToken) => {
 
   return { message: "Logged out successfully" };
 };
+
+export const getUserSessions = async (userId) => {
+  const sessions = await RefreshToken.find({
+    user: userId,
+    revoked: false,
+    expiresAt: { $gt: new Date() },
+  })
+    .select("-token")
+    .sort({ createdAt: -1 });
+
+  return sessions;
+};
+
+export const revokeUserSession = async (userId, sessionId) => {
+  const session = await RefreshToken.findOneAndDelete({
+    _id: sessionId,
+    user: userId,
+  });
+
+  if (!session) {
+    throw new ApiError(404, "Session not found");
+  }
+
+  return { message: "Session revoked successfully" };
+};
