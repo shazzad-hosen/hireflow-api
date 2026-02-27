@@ -11,33 +11,44 @@ import {
   getApplicationAnalyticsController,
   getApplicationHistoryController,
 } from "../controllers/application.controller.js";
+
 import {
   createApplicationSchema,
   updateApplicationSchema,
 } from "../validations/application.validation.js";
+
+import { apiLimiter } from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
 router.get(
   "/analytics",
   protect,
+  apiLimiter,
   asyncHandler(getApplicationAnalyticsController),
 );
 
 router.post(
   "/",
   protect,
+  apiLimiter,
   validate(createApplicationSchema),
   asyncHandler(createApplicationController),
 );
 
-router.get("/", protect, asyncHandler(getApplicationsController));
+router.get("/", apiLimiter, protect, asyncHandler(getApplicationsController));
 
-router.get("/:id", protect, asyncHandler(getSingleApplicationController));
+router.get(
+  "/:id",
+  protect,
+  apiLimiter,
+  asyncHandler(getSingleApplicationController),
+);
 
 router.patch(
   "/:id",
   protect,
+  apiLimiter,
   validate(updateApplicationSchema),
   asyncHandler(updateApplicationController),
 );
@@ -47,6 +58,7 @@ router.delete("/:id", protect, asyncHandler(deleteApplicationController));
 router.get(
   "/:id/history",
   protect,
+  apiLimiter,
   asyncHandler(getApplicationHistoryController),
 );
 

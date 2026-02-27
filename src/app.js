@@ -4,11 +4,25 @@ import ApiError from "./utils/ApiError.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import cookieParser from "cookie-parser";
 import applicationRoutes from "./routes/application.routes.js";
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import { ENV } from "./config/env.js";
+import cors from "cors";
 
 const app = express();
-app.use(cookieParser());
 
-app.use(express.json({ limit: "16kb" }));
+app.use(cookieParser());
+app.use(helmet());
+app.use(mongoSanitize());
+
+app.use(
+  cors({
+    origin: ENV.CLIENT_URL,
+    credentials: true,
+  }),
+);
+
+app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
