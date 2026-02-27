@@ -23,8 +23,12 @@ const verifyRefreshToken = async (req, res, next) => {
     });
 
     if (!existingToken) {
-      await RefreshToken.deleteMany({ user: decoded.id });
-      return next(new ApiError(403, "Token compromised. Please login again."));
+      return next(
+        new ApiError(
+          403,
+          "This session is no longer valid. Please login again.",
+        ),
+      );
     }
 
     req.userId = decoded.id;

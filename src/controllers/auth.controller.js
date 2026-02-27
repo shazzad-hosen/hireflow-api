@@ -7,7 +7,7 @@ import {
 import { ENV } from "../config/env.js";
 import parseExpiryToMs from "../utils/parseExpiry.js";
 
-export const register = async (req, res) => {
+export const registerController = async (req, res) => {
   const result = await registerUser(req.body);
 
   res.cookie("refreshToken", result.refreshToken, {
@@ -27,8 +27,11 @@ export const register = async (req, res) => {
   });
 };
 
-export const login = async (req, res) => {
-  const result = await loginUser(req.body);
+export const loginController = async (req, res) => {
+  const result = await loginUser(req.body, {
+    userAgent: req.headers["user-agent"],
+    ip: req.ip,
+  });
 
   res.cookie("refreshToken", result.refreshToken, {
     httpOnly: true,
@@ -47,8 +50,11 @@ export const login = async (req, res) => {
   });
 };
 
-export const refreshToken = async (req, res) => {
-  const tokens = await refreshUserToken(req.userId, req.refreshToken);
+export const refreshTokenController = async (req, res) => {
+  const tokens = await refreshUserToken(req.userId, req.refreshToken, {
+    userAgent: req.headers["user-agent"],
+    ip: req.ip,
+  });
 
   res.cookie("refreshToken", tokens.refreshToken, {
     httpOnly: true,
@@ -63,8 +69,10 @@ export const refreshToken = async (req, res) => {
   });
 };
 
-export const logout = async (req, res) => {
-  await logoutUser(req.refreshToken);
+export const logoutController = async (req, res) => {
+  const refreshTokenCookie = req.cookies?.refreshToken;
+
+  let result = await logoutUser(req.user._id, refreshTokenCookie);
 
   res.clearCookie("refreshToken", {
     httpOnly: true,
@@ -74,6 +82,6 @@ export const logout = async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: "Logged out successfully",
+    ...result,
   });
 };

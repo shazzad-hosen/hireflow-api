@@ -3,13 +3,14 @@ import validate from "../middlewares/validate.middleware.js";
 import { registerSchema, loginSchema } from "../validations/auth.validation.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import {
-  register,
-  login,
-  refreshToken,
-  logout,
+  registerController,
+  loginController,
+  refreshTokenController,
+  logoutController,
 } from "../controllers/auth.controller.js";
 
 import verifyRefreshToken from "../middlewares/verifyRefreshToken.middleware.js";
+import protect from "../middlewares/protect.middleware.js";
 
 import {
   registerLimiter,
@@ -23,18 +24,23 @@ router.post(
   "/register",
   registerLimiter,
   validate(registerSchema),
-  asyncHandler(register),
+  asyncHandler(registerController),
 );
 
-router.post("/login", loginLimiter, validate(loginSchema), asyncHandler(login));
+router.post(
+  "/login",
+  loginLimiter,
+  validate(loginSchema),
+  asyncHandler(loginController),
+);
 
 router.post(
   "/refresh",
   refreshLimiter,
   verifyRefreshToken,
-  asyncHandler(refreshToken),
+  asyncHandler(refreshTokenController),
 );
 
-router.post("/logout", verifyRefreshToken, asyncHandler(logout));
+router.post("/logout", protect, asyncHandler(logoutController));
 
 export default router;

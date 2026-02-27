@@ -52,8 +52,9 @@ export const registerUser = async (data) => {
   };
 };
 
-export const loginUser = async (data) => {
+export const loginUser = async (data, meta) => {
   const { email, password } = data;
+  const { userAgent, ip } = meta;
 
   const user = await User.findOne({ email }).select("+password");
 
@@ -66,8 +67,6 @@ export const loginUser = async (data) => {
   if (!isMatch) {
     throw new ApiError(401, "Invalid credentials");
   }
-
-  await RefreshToken.deleteMany({ user: user._id });
 
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
@@ -85,6 +84,8 @@ export const loginUser = async (data) => {
     user: user._id,
     token: hashedToken,
     expiresAt: refreshExpiry,
+    userAgent,
+    ip,
   });
 
   const userObject = user.toObject();
@@ -97,7 +98,7 @@ export const loginUser = async (data) => {
   };
 };
 
-export const refreshUserToken = async (userId, existingRefreshToken) => {
+export const refreshUserToken = async (userId, existingRefreshToken, meta) => {
   await RefreshToken.deleteOne({ _id: existingRefreshToken._id });
 
   const newAccessToken = generateAccessToken(userId);
@@ -116,6 +117,8 @@ export const refreshUserToken = async (userId, existingRefreshToken) => {
     user: userId,
     token: hashedToken,
     expiresAt: refreshExpiry,
+    userAgent: meta.userAgent,
+    ip: meta.ip,
   });
 
   return {
@@ -124,6 +127,24 @@ export const refreshUserToken = async (userId, existingRefreshToken) => {
   };
 };
 
-export const logoutUser = async (incomingRefreshToken) => {
-  await RefreshToken.deleteOne({ _id: incomingRefreshToken._id });
+export const logoutUser = async (userId, incomingRefreshToken) => {
+  if (!incomingRefreshToken) {
+    throw new ApiError(400, "Refresh token missing");
+  }
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(incomingRefreshToken)
+    .digest("hex");
+
+  const deleted = await RefreshToken.findOneAndDelete({
+    token: hashedToken,
+    user: userId,
+  });
+
+  if (!deleted) {
+    throw new ApiError(400, "Refresh token already invalid or expired");
+  }
+
+  return { message: "Logged out successfully" };
 };

@@ -5,7 +5,6 @@ import errorHandler from "./middlewares/error.middleware.js";
 import cookieParser from "cookie-parser";
 import applicationRoutes from "./routes/application.routes.js";
 import helmet from "helmet";
-import mongoSanitize from "express-mongo-sanitize";
 import { ENV } from "./config/env.js";
 import cors from "cors";
 
@@ -13,7 +12,6 @@ const app = express();
 
 app.use(cookieParser());
 app.use(helmet());
-app.use(mongoSanitize());
 
 app.use(
   cors({
