@@ -219,7 +219,7 @@ npm start
 
 ### 🌐 Live API (Test)
 
-Base URL: 
+Base URL: https://hireflow-api-qwvn.onrender.com
 
 > ⚠️ This is a **test environment**.  
 > Data may be reset at any time.
@@ -227,7 +227,7 @@ Base URL:
 #### Example: Register
 
 ```http
-POST 
+POST https://hireflow-api-qwvn.onrender.com/api/auth/register
 ```
 ```json
 {
