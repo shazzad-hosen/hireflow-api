@@ -1,6 +1,5 @@
 import Joi from "joi";
 
-// Schema validation for create application
 export const createApplicationSchema = Joi.object({
   companyName: Joi.string().trim().min(2).max(100).required(),
 
@@ -56,7 +55,6 @@ export const createApplicationSchema = Joi.object({
   notes: Joi.string().trim().max(3000).optional(),
 });
 
-// Schema validation for update application
 export const updateApplicationSchema = createApplicationSchema
   .fork(Object.keys(createApplicationSchema.describe().keys), (schema) =>
     schema.optional(),

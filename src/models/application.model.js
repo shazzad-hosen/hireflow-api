@@ -143,7 +143,7 @@ applicationSchema.pre("save", function () {
   }
 
   if (this.status === "REJECTED" && this.offerDetails) {
-    throw new Error("Rejected application cannot contain offer details");
+    throw new Error("Rejected application can not contain offer details");
   }
 
   if (

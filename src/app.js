@@ -30,12 +30,10 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/applications", applicationRoutes);
 
-// Request handler for invalid(404) routes
 app.use((req, res, next) => {
   next(new ApiError(404, "Route not found"));
 });
 
-// Centralized error handler
 app.use(errorHandler);
 
 export default app;
